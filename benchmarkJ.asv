@@ -1,0 +1,77 @@
+function [rank_opt, J_values] = benchmarkJ(J_opt, x1_0, x2_0, u1_opt, u2_opt, xi1, xi2, dt, N, M, params)
+% benchmarkJ - Benchmark optimal J against 1000 perturbed random walk control trajectories
+%
+% Inputs:
+%   J_opt     : Optimal objective value from main.m
+%   x1_0, x2_0: Initial states for x1, x2
+%   u1_opt, u2_opt: Optimal controls [N x M]
+%   xi1, xi2  : [N x M] Brownian increments
+%   dt        : Time step
+%   N         : Number of time steps
+%   M         : Number of Monte Carlo paths
+%   params    : Struct with parameters
+%
+% Outputs:
+%   rank_opt  : Rank of J_opt among all J values (1 is best)
+%   J_values  : [1001 x 1] array of J values (1000 perturbed + J_opt)
+
+    % Number of perturbed control trajectories
+    num_trials = 1000;
+
+    % Initialize array to store J values (1000 perturbed + 1 optimal)
+    J_values = zeros(num_trials + 1, 1);
+    J_values(1) = J_opt; % Store optimal J
+
+    % Compute step size for random walk perturbations
+    u1_std = std(u1_opt(:));
+    u2_std = std(u2_opt(:));
+    sigma_rw = max(u1_std, u2_std) / 60; 
+
+    % Compute J for perturbed controls
+    compute_J = @(x1, x2, u1, u2) mean(sum( ...
+        (params.F1 * u1 - params.gamma1 * (u1.^2) ./ max(x1(1:N,:).^2, params.epsilon) + ...
+         params.F2 * u2 - params.gamma2 * (u2.^2) ./ max(x2(1:N,:).^2, params.epsilon)) * dt, 1));
+tic
+    % Generate perturbed random walk controls
+    parfor (trial = 1:num_trials)
+        % Initialize perturbation
+        w1 = zeros(N, M);
+        w2 = zeros(N, M);
+        
+        % Generate random walk perturbations
+        for m = 1:M
+            w1(1, m) = sigma_rw * randn; % Initial step
+            w2(1, m) = sigma_rw * randn;
+            for i = 2:N
+                w1(i, m) = w1(i-1, m) + sigma_rw * randn;
+                w2(i, m) = w2(i-1, m) + sigma_rw * randn;
+            end
+        end
+
+        % Perturb optimal controls, ensure non-negativity
+        u1_pert = max(0, u1_opt + w1);
+        u2_pert = max(0, u2_opt + w2);
+
+        % Simulate forward SDEs with same Brownian paths
+        [x1_pert, x2_pert] = forward(x1_0, x2_0, u1_pert, u2_pert, dt, N, M, params);
+
+        % Compute J for perturbed controls
+        J_values(trial + 1) = compute_J(x1_pert, x2_pert, u1_pert, u2_pert);
+
+        % Display progress every 100 trials
+        if mod(trial, 100) == 0
+            fprintf('Processed %d perturbed random walk control trajectories\n', trial);
+        end
+    end
+    toc
+
+    % Sort J values in descending order (higher J is better)
+    [~, sorted_idx] = sort(J_values, 'descend');
+    
+    % Find rank of J_opt (1 is best)
+    rank_opt = find(sorted_idx == 1);
+    fprintf('Rank of J_opt among %d controls: %d\n', num_trials + 1, rank_opt);
+
+    % Save J values for analysis
+    save('benchmarkJ_results.mat', 'J_values', 'rank_opt');
+end

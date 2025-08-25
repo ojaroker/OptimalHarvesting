@@ -1,0 +1,47 @@
+function [x1,x2] = forward(initx1,initx2,u1,u2,dt,N,M,params)
+
+    alpha  = params.alpha;
+    beta   = params.beta;
+    gamma  = params.gamma;
+    delta  = params.delta;
+    sigma1 = params.sigma1;
+    sigma2 = params.sigma2;
+    epsilon = params.epsilon;
+
+    % Preallocate state arrays
+    % x1 = zeros(N+1, M);
+    x2 = zeros(N+1, M);
+
+    % Set initial conditions
+    x1(1, :) = initx1;
+    x2(1, :) = initx2;
+
+    % Time stepping
+    for m = 1:M
+        for i = 1:N
+            % Current states
+            x1_i = x1(i, m);
+            x2_i = x2(i, m);
+
+            % Drift terms
+            f1 = alpha * x1_i - beta * x1_i * x2_i - u1(i, m);
+            f2 = -gamma * x2_i + delta * x1_i * x2_i - u2(i, m);
+
+            % Diffusion terms
+            g1 = sigma1 * x1_i;
+            g2 = sigma2 * x2_i;
+
+            % Gaussian noise
+            xi1 = randn;
+            xi2 = randn;
+
+            % Euler-Maruyama update
+            x1_next = x1_i + f1 * dt + g1 * sqrt(dt) * xi1;
+            x2_next = x2_i + f2 * dt + g2 * sqrt(dt) * xi2;
+
+            % Enforce non-negativity
+            x1(i+1, m) = max(x1_next, epsilon);
+            x2(i+1, m) = max(x2_next, epsilon);
+        end
+    end
+end
