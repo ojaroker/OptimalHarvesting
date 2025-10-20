@@ -3,12 +3,12 @@
 clear; clc; close all;
 
 %% Parameters
-T=2.4;
-N = 9000;            % Number of time steps
+T=2.5;
+N = 3200;            % Number of time steps
 M = 100;           % Monte Carlo paths
 dt = T/N;           % Time step
-tol = 5e-2;         % Convergence tolerance
-maxIterations = 5;
+tol = 1e-1;         % Convergence tolerance
+maxIterations = 60;
 uMax = 50;
 omega=0.85;
 
@@ -18,12 +18,12 @@ params.alpha   = 4.5;
 params.beta    = 0.5; 
 params.gamma   = 4.5; 
 params.delta   = 0.5; 
-params.sigma1  = 0.01;
-params.sigma2  = 0.005;
+params.sigma1  = 0.008;
+params.sigma2  = 0.004;
 params.gamma1  = 2;     % control cost for species 1
-params.gamma2  = .4;     % control cost for species 2
+params.gamma2  = 1;     % control cost for species 2
 params.F1      = 0.8;     % unit price for species 1
-params.F2      = 3;     % unit price for species 2
+params.F2      = 1.2;     % unit price for species 2
 params.epsilon = 1e-8;
 
 % Initial states
@@ -113,7 +113,7 @@ martingale_error = max(abs(sum(p1(1:N,:) .* xi1, 2)));
 fprintf('Martingale error for p1: %.6e\n', martingale_error);
 
  
-[rank_opt, J_values] = benchmarkJ(J_opt, x1_0, x2_0, u1, u2, xi1, xi2, dt, N, M, params);
+[J_values] = benchmarkJ(J_opt, x1_0, x2_0, u1, u2, xi1, xi2, dt, N, M, params);
 disp(sum(J_values>0))
 
 
@@ -146,9 +146,12 @@ pl2 = plot(t, mx2, 'r', 'LineWidth', 1.5, 'DisplayName', 'x_2 ± 2σ (Predator)'
 xlabel('Time');
 ylabel('Population');
 title('State Trajectories');
-ylim([0 35])
+ylim([0 40])
 grid on;
 legend([pl1 pl2], 'Location', 'north');
+
+xticks([0 T]);
+xticklabels({'0','T'});
 
 % ===== Controls (u1, u2) =====
 subplot(2,1,2);
@@ -177,3 +180,5 @@ ylim([0 inf])
 grid on;
 legend([pl3 pl4], 'Location', 'north');
 
+xticks([0 T]);
+xticklabels({'0','T'});

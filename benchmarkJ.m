@@ -1,4 +1,4 @@
-function [rank_opt, J_values] = benchmarkJ(J_opt, x1_0, x2_0, u1_opt, u2_opt, xi1, xi2, dt, N, M, params)
+function [J_values] = benchmarkJ(J_opt, x1_0, x2_0, u1_opt, u2_opt, xi1, xi2, dt, N, M, params)
 % benchmarkJ - Benchmark optimal J against 1000 perturbed random walk control trajectories
 %
 % Inputs:
@@ -25,7 +25,7 @@ function [rank_opt, J_values] = benchmarkJ(J_opt, x1_0, x2_0, u1_opt, u2_opt, xi
     % Compute step size for random walk perturbations
     u1_std = std(u1_opt(:));
     u2_std = std(u2_opt(:));
-    sigma_rw = max(u1_std, u2_std) / 500; 
+    sigma_rw = max(u1_std, u2_std) / 750; 
     
 
     % Compute J for perturbed controls
@@ -48,7 +48,7 @@ tic
                 w2(i, m) = w2(i-1, m) + sigma_rw * randn;
             end
         end
-    plot(w1)
+    %plot(w1)
         % Perturb optimal controls, ensure non-negativity
         u1_pert = max(0, u1_opt + w1);
         u2_pert = max(0, u2_opt + w2);
@@ -67,13 +67,9 @@ tic
     end
     toc
 
-    % Sort J values in descending order (higher J is better)
-    [~, sorted_idx] = sort(J_values, 'descend');
-    
-    % Find rank of J_opt (1 is best)
-    rank_opt = find(sorted_idx == 1);
-    fprintf('Rank of J_opt among %d controls: %d\n', num_trials + 1, rank_opt);
+    numHigher = sum(J_values>J_opt);
+    fprintf('Number of values above J_opt in %d trials: %d\n', num_trials, numHigher);
 
     % Save J values for analysis
-    save('benchmarkJ_results.mat', 'J_values', 'rank_opt');
+    %save('benchmarkJ_results.mat', 'J_values', 'rank_opt');
 end
