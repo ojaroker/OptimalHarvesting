@@ -16,7 +16,7 @@ function [J_values] = benchmarkJ(J_opt, x1_0, x2_0, u1_opt, u2_opt, xi1, xi2, dt
 %   J_values  : [1001 x 1] array of J values (1000 perturbed + J_opt)
 
     % Number of perturbed control trajectories
-    num_trials = 1000;
+    num_trials = 600;
 
     % Initialize array to store J values (1000 perturbed + 1 optimal)
     J_values = zeros(num_trials + 1, 1);

@@ -3,8 +3,8 @@
 clear; clc; close all;
 
 %% Parameters
-T=2.5;
-N = 3200;            % Number of time steps
+T=3;
+N = 5000;            % Number of time steps
 M = 100;           % Monte Carlo paths
 dt = T/N;           % Time step
 tol = 1e-1;         % Convergence tolerance
@@ -18,8 +18,8 @@ params.alpha   = 4.5;
 params.beta    = 0.5; 
 params.gamma   = 4.5; 
 params.delta   = 0.5; 
-params.sigma1  = 0.008;
-params.sigma2  = 0.004;
+params.sigma1  = 0.04;
+params.sigma2  = 0.04;
 params.gamma1  = 2;     % control cost for species 1
 params.gamma2  = 1;     % control cost for species 2
 params.F1      = 0.8;     % unit price for species 1
@@ -42,16 +42,15 @@ p1 = zeros(N+1, M);
 p2 = zeros(N+1, M);
 q1 = zeros(N, M);
 q2 = zeros(N, M);
-xi1=zeros(N,M);
-xi2=zeros(N,M);
 
 %% Begin Forward-Backward Sweep
+xi1 = randn(N, M);
+xi2 = randn(N, M);
 for k = 1:maxIterations
     fprintf('Iteration %d...\n', k);
 
     % --- Forward step ---
-    xi1 = randn(N, M);
-    xi2 = randn(N, M);
+    
     [x1, x2] = forward(x1_0, x2_0, u1, u2, dt, xi1,xi2,N, M, params);
 
     % --- Backward step ---
@@ -114,7 +113,7 @@ fprintf('Martingale error for p1: %.6e\n', martingale_error);
 
  
 [J_values] = benchmarkJ(J_opt, x1_0, x2_0, u1, u2, xi1, xi2, dt, N, M, params);
-disp(sum(J_values>0))
+fprintf("Values > 0: %d\n",sum(J_values>0))
 
 
 
